@@ -193,50 +193,77 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Just Today'),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              children: [
-                for (final item in _items)
-                  switch (item) {
-                    TextItem() => MessageBubble(
-                      text: item.text,
-                      isUser: item.isUser,
-                    ),
-                    // New!
-                    SurfaceItem() => Surface(
-                      surfaceContext: _controller.contextFor(item.surfaceId),
-                    ),
-                  },
-              ],
-            ),
-          ),
-
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      onSubmitted: (_) => _addMessage(),
-                      decoration: const InputDecoration(
-                        hintText: 'Enter a message',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _addMessage,
-                    child: const Text('Send'),
-                  ),
-                ],
+          Column(
+            children: [
+              // Wrap the ListView in an Expanded widget to fill available space
+              Expanded(
+                child: ListView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    for (final item in _items)
+                      switch (item) {
+                        TextItem() => MessageBubble(
+                          text: item.text,
+                          isUser: item.isUser,
+                        ),
+                        // New!
+                        SurfaceItem() => Surface(
+                          surfaceContext: _controller.contextFor(
+                            item.surfaceId,
+                          ),
+                        ),
+                      },
+                  ],
+                ),
               ),
-            ),
+
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  // Wrap the Row in a ValueListenableBuilder:
+
+                  child: ValueListenableBuilder<ConversationState>(
+                    valueListenable: _conversation.state,
+                    builder: (context, state, child) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _textController,
+                              // Also disable the Enter key submission when waiting!
+                              onSubmitted: state.isWaiting
+                                  ? null
+                                  : (_) => _addMessage(),
+                              decoration: const InputDecoration(
+                                hintText: 'Enter a message',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            // Disable the send button when the model is generating
+                            onPressed: state.isWaiting ? null : _addMessage,
+                            child: const Text('Send'),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              ValueListenableBuilder<ConversationState>(
+                valueListenable: _conversation.state,
+                builder: (context, state, child) {
+                  if (state.isWaiting) {
+                    return const LinearProgressIndicator();
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
           ),
         ],
       ),
