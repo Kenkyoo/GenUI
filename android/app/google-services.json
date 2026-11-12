@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "133804767866",
+    "project_id": "gen-ui-tasks",
+    "storage_bucket": "gen-ui-tasks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:133804767866:android:c06d4ceae73b9bfa8a99c3",
+        "android_client_info": {
+          "package_name": "com.example.intro_to_genui"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnwx-GiN3P_Cizqyu8gkJQ6WvXG-AACd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
