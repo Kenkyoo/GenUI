@@ -1,17 +1,22 @@
-# intro_to_genui
+# Lista de tareas con IA
 
-A new Flutter project.
+Aplicación de lista de tareas desarrollada con Flutter que explora la integración de inteligencia artificial y las interfaces generativas (GenUI).
 
-## Getting Started
+## Descripción
 
-This project is a starting point for a Flutter application.
+Este proyecto sirve como punto de partida para crear una experiencia de organización de tareas con una interfaz construida en Flutter y capacidades de IA integradas. Su objetivo es explorar cómo combinar una aplicación de tareas con interacciones potenciadas por inteligencia artificial.
 
-A few resources to get you started if this is your first Flutter project:
+## Tecnologías
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **Flutter**: framework utilizado para desarrollar la aplicación.
+- **Dart**: lenguaje de programación utilizado por Flutter.
+- **Inteligencia artificial y GenUI**: conceptos centrales de la experiencia del proyecto.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Cómo ejecutar
+
+Con el [SDK de Flutter](https://docs.flutter.dev/get-started/install) instalado, ejecuta desde la raíz del proyecto:
+
+```bash
+flutter pub get
+flutter run
+```
