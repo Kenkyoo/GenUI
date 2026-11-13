@@ -24,8 +24,62 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Just Today',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF5B6CFF),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF6F7FB),
+        appBarTheme: const AppBarTheme(
+          elevation: 0,
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Color(0xFF1F2430),
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+            color: Color(0xFF1F2430),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 14,
+          ),
+          hintStyle: const TextStyle(color: Color(0xFF9AA0AE)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: const BorderSide(color: Color(0xFF5B6CFF), width: 1.4),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF5B6CFF),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+            ),
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
+        ),
       ),
       home: const MyHomePage(),
     );
@@ -57,15 +111,14 @@ class _MyHomePageState extends State<MyHomePage> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
   late final ChatSession _chatSession;
-  // Add GenUI controllers
   late final SurfaceController _controller;
   late final A2uiTransportAdapter _transport;
   late final Conversation _conversation;
   late final Catalog catalog;
+
   Future<void> _sendAndReceive(ChatMessage msg) async {
     final buffer = StringBuffer();
 
-    // Reconstruct the message part fragments
     for (final part in msg.parts) {
       if (part.isUiInteractionPart) {
         buffer.write(part.asUiInteractionPart!.interaction);
@@ -79,12 +132,9 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     final text = buffer.toString();
-
-    // Send the string to Firebase AI Logic.
     final response = await _chatSession.sendMessage(Content.text(text));
 
     if (response.text?.isNotEmpty ?? false) {
-      // Feed the response back into GenUI's transportation layer
       _transport.addChunk(response.text!);
     }
   }
@@ -96,39 +146,24 @@ class _MyHomePageState extends State<MyHomePage> {
       model: 'gemini-3.5-flash',
     );
     _chatSession = model.startChat();
-    // Initialize the GenUI Catalog.
-    // The genui package provides a default set of primitive widgets (like text
-    // and basic buttons) out of the box using this class.
-    // The Catalog is immutable, so use copyWith to create a new version
-    // that includes our custom catalog item along with the basics.
+
     catalog = BasicCatalogItems.asCatalog().copyWith(newItems: [taskDisplay]);
-
-    // Create a SurfaceController to manage the state of generated surfaces.
     _controller = SurfaceController(catalogs: [catalog]);
-
-    // Create a transport adapter that will process messages to and from the
-    // agent, looking for A2UI messages.
     _transport = A2uiTransportAdapter(onSend: _sendAndReceive);
-
-    // Link the transport and SurfaceController together in a Conversation,
-    // which provides your app a unified API for interacting with the agent.
     _conversation = Conversation(
       controller: _controller,
       transport: _transport,
     );
-    // Listen to GenUI stream events to update the UI
+
     _conversation.events.listen((event) {
       setState(() {
         switch (event) {
           case ConversationSurfaceAdded added:
-            // Wrap these two lines in an if check:
             if (added.surfaceId != taskDisplaySurfaceId) {
               _items.add(SurfaceItem(surfaceId: added.surfaceId));
               _scrollToBottom();
             }
           case ConversationSurfaceRemoved removed:
-            // ... existing code ...
-
             _items.removeWhere(
               (item) =>
                   item is SurfaceItem && item.surfaceId == removed.surfaceId,
@@ -142,15 +177,12 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       });
     });
-    // Create the system prompt for the agent, which will include this app's
-    // system instruction as well as the schema for the catalog.
+
     final promptBuilder = PromptBuilder.chat(
       catalog: catalog,
       systemPromptFragments: [systemInstruction],
     );
 
-    // Send the prompt into the Conversation, which will subsequently route it
-    // to Firebase using the transport mechanism.
     _conversation.sendRequest(
       ChatMessage.system(promptBuilder.systemPromptJoined()),
     );
@@ -193,100 +225,142 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _scrollToBottom();
 
-    // Send the user's input through GenUI instead of directly to Firebase.
     await _conversation.sendRequest(ChatMessage.user(text));
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Just Today'),
-      ),
-      body: Stack(
+      appBar: AppBar(title: const Text('Just Today')),
+      body: Column(
         children: [
-          Column(
-            children: [
-              AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  alignment: Alignment.topLeft,
-                  child: Surface(
-                    surfaceContext: _controller.contextFor(
-                      taskDisplaySurfaceId,
+          // ---- Panel superior: superficie fija del TaskDisplay ----
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
+                  ],
+                ),
+                child: Surface(
+                  surfaceContext: _controller.contextFor(taskDisplaySurfaceId),
                 ),
               ),
-              const Divider(),
-              Expanded(
-                child: ListView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    for (final item in _items)
-                      switch (item) {
-                        TextItem() => MessageBubble(
-                          text: item.text,
-                          isUser: item.isUser,
+            ),
+          ),
+
+          // ---- Lista de conversación ----
+          Expanded(
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              children: [
+                for (final item in _items)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: switch (item) {
+                      TextItem() => MessageBubble(
+                        text: item.text,
+                        isUser: item.isUser,
+                      ),
+                      SurfaceItem() => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        // New!
-                        SurfaceItem() => Surface(
+                        child: Surface(
                           surfaceContext: _controller.contextFor(
                             item.surfaceId,
                           ),
                         ),
-                      },
-                  ],
-                ),
-              ),
-
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  // Wrap the Row in a ValueListenableBuilder:
-
-                  child: ValueListenableBuilder<ConversationState>(
-                    valueListenable: _conversation.state,
-                    builder: (context, state, child) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              // Also disable the Enter key submission when waiting!
-                              onSubmitted: state.isWaiting
-                                  ? null
-                                  : (_) => _addMessage(),
-                              decoration: const InputDecoration(
-                                hintText: 'Enter a message',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            // Disable the send button when the model is generating
-                            onPressed: state.isWaiting ? null : _addMessage,
-                            child: const Text('Send'),
-                          ),
-                        ],
-                      );
+                      ),
                     },
                   ),
-                ),
-              ),
-              ValueListenableBuilder<ConversationState>(
+              ],
+            ),
+          ),
+
+          // ---- Barra de progreso ----
+          ValueListenableBuilder<ConversationState>(
+            valueListenable: _conversation.state,
+            builder: (context, state, child) {
+              if (state.isWaiting) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: const LinearProgressIndicator(minHeight: 4),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+
+          // ---- Caja de entrada ----
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: ValueListenableBuilder<ConversationState>(
                 valueListenable: _conversation.state,
                 builder: (context, state, child) {
-                  if (state.isWaiting) {
-                    return const LinearProgressIndicator();
-                  }
-                  return const SizedBox.shrink();
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _textController,
+                          textInputAction: TextInputAction.send,
+                          minLines: 1,
+                          maxLines: 5,
+                          onSubmitted: state.isWaiting
+                              ? null
+                              : (_) => _addMessage(),
+                          decoration: const InputDecoration(
+                            hintText: 'Escribe un mensaje…',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Material(
+                        color: colorScheme.primary,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: state.isWaiting ? null : _addMessage,
+                          child: Container(
+                            width: 52,
+                            height: 52,
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.arrow_upward_rounded,
+                              color: state.isWaiting
+                                  ? Colors.white54
+                                  : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
                 },
               ),
-            ],
+            ),
           ),
         ],
       ),
