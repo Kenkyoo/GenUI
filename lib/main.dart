@@ -5,6 +5,8 @@ import 'package:intro_to_genui/message_bubble.dart';
 import 'package:genui/genui.dart' hide TextPart;
 import 'package:genui/genui.dart' as genui;
 
+import 'task_display.dart';
+
 import 'firebase_options.dart';
 
 const taskDisplaySurfaceId = 'task_display';
@@ -97,7 +99,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // Initialize the GenUI Catalog.
     // The genui package provides a default set of primitive widgets (like text
     // and basic buttons) out of the box using this class.
-    catalog = BasicCatalogItems.asCatalog();
+    // The Catalog is immutable, so use copyWith to create a new version
+    // that includes our custom catalog item along with the basics.
+    catalog = BasicCatalogItems.asCatalog().copyWith(newItems: [taskDisplay]);
 
     // Create a SurfaceController to manage the state of generated surfaces.
     _controller = SurfaceController(catalogs: [catalog]);
